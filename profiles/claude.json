@@ -2,9 +2,6 @@
   "name": "Claude (Anthropic)",
   "provider": "claude",
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "sk-ant-api03-...",
-    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
-    "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",
     "API_TIMEOUT_MS": "3000000",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   }

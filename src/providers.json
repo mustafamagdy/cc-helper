@@ -1,0 +1,38 @@
+[
+    {
+        "id": "claude",
+        "name": "Anthropic Claude",
+        "description": "Official Anthropic Claude API",
+        "baseUrl": "https://api.anthropic.com",
+        "defaultModel": "claude-sonnet-4-20250514",
+        "authUrl": "https://console.anthropic.com/settings/keys",
+        "authInstructions": "Get your API key from the Anthropic Console"
+    },
+    {
+        "id": "glm",
+        "name": "GLM (Zhipu AI)",
+        "description": "Zhipu AI's GLM models",
+        "baseUrl": "https://api.z.ai/api/anthropic",
+        "defaultModel": "GLM-4.7",
+        "authUrl": "https://z.ai/manage-apikey/apikey-list",
+        "authInstructions": "Get your API key from Z.ai API dashboard"
+    },
+    {
+        "id": "minimax",
+        "name": "MiniMax",
+        "description": "MiniMax AI API",
+        "baseUrl": "https://api.minimax.io/anthropic",
+        "defaultModel": "MiniMax-M2.1",
+        "authUrl": "https://platform.minimax.io/user-center/payment/coding-plan",
+        "authInstructions": "Get your JWT token from MiniMax platform"
+    },
+    {
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "description": "Unified API for multiple LLM providers",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "defaultModel": "anthropic/claude-3.5-sonnet",
+        "authUrl": "https://openrouter.ai/keys",
+        "authInstructions": "Get your API key from OpenRouter"
+    }
+]
