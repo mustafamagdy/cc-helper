@@ -370,8 +370,18 @@ async function showExport() {
 async function main() {
 	const args = process.argv.slice(2);
 
-	if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-		console.log(`\n${C.bold}${C.white}Claude Profile Manager${C.reset}\n\n${C.cyan}Interactive TUI:${C.reset}\n  claude-profile           Start interactive mode\n\n${C.cyan}Commands:${C.reset}\n  claude-profile list      List all profiles\n  claude-profile current   Show current profile info\n  claude-profile export    Export profile env vars\n\n${C.cyan}Navigation (TUI):${C.reset}\n  Up/Down or j/k          Navigate\n  Enter                   Select\n  Esc or q                Go back\n  Ctrl+C                  Quit\n`);
+	if (args.length === 0) {
+		// Interactive mode by default
+		if (!process.stdin.isTTY) {
+			console.log(`\n${C.bold}${C.white}Claude Profile Manager${C.reset}\n\n${C.yellow}Interactive mode requires a terminal.${C.reset}\n\nUse: claude-profile list | current | export <name>\n`);
+			return;
+		}
+		await interactiveMode();
+		return;
+	}
+
+	if (args[0] === '--help' || args[0] === '-h') {
+		console.log(`\n${C.bold}${C.white}Claude Profile Manager${C.reset}\n\n${C.cyan}Interactive TUI (default):${C.reset}\n  claude-profile           Start interactive mode\n\n${C.cyan}Commands:${C.reset}\n  claude-profile list      List all profiles\n  claude-profile current   Show current profile info\n  claude-profile export    Export profile env vars\n\n${C.cyan}Navigation (TUI):${C.reset}\n  Up/Down or j/k          Navigate\n  Enter                   Select\n  Esc or q                Go back\n  Ctrl+C                  Quit\n`);
 		return;
 	}
 
@@ -420,7 +430,9 @@ async function main() {
 		return;
 	}
 
-	// Interactive mode
+}
+
+async function interactiveMode() {
 	if (!process.stdin.isTTY) {
 		console.log(`\n${C.bold}${C.white}Claude Profile Manager${C.reset}\n\n${C.yellow}Interactive mode requires a terminal.${C.reset}\n\nUse: claude-profile list | current | export <name>\n`);
 		return;
