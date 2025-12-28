@@ -198,28 +198,90 @@ async function configure() {
 
 async function configureProvider(provider: Provider) {
 	eraseScreen();
-	console.log(`\n  ${C.bold}${C.cyan}${provider.name}${C.reset}\n`);
+	console.log(`\n  ${C.bold}${C.cyan}Configure ${provider.name}${C.reset}\n`);
 	console.log(`  ${C.gray}${provider.description}${C.reset}\n`);
-	console.log(`  URL: ${C.cyan}${provider.baseUrl}${C.reset}`);
-	console.log(`  Model: ${C.cyan}${provider.defaultModel}${C.reset}\n`);
-	if (provider.authUrl) { console.log(`  ${C.cyan}->${C.reset} ${provider.authInstructions}`); console.log(`  ${C.cyan}->${C.reset} ${provider.authUrl}\n`); }
 
-	const token = await prompt(`  ${C.cyan}> ${C.reset}`);
+	// Step 1: Base URL
+	let baseUrl = provider.baseUrl;
+	console.log(`  ${C.bold}Step 1:${C.reset} API Base URL`);
+	console.log(`  ${C.gray}Default: ${provider.baseUrl}${C.reset}`);
+	const urlInput = await prompt(`  ${C.cyan}> ${C.reset}(Enter to use default)`);
+	if (urlInput.trim()) {
+		baseUrl = urlInput.trim();
+	}
+	console.log(`  ${C.green}✓${C.reset} Base URL: ${baseUrl}\n`);
 
-	if (token.trim()) {
-		const existingProfile = getProfile(provider.id);
-		const profile: Profile = existingProfile || { name: provider.name, provider: provider.id, env: {} };
-		profile.env['ANTHROPIC_AUTH_TOKEN'] = token.trim();
-		profile.env['ANTHROPIC_BASE_URL'] = provider.baseUrl;
-		if (!profile.env['ANTHROPIC_MODEL']) profile.env['ANTHROPIC_MODEL'] = provider.defaultModel;
-		saveProfile(profile);
-		console.log(`\n  ${C.green}✓ ${provider.name} configured successfully!${C.reset}\n`);
+	// Step 2: Auth Method
+	console.log(`  ${C.bold}Step 2:${C.reset} Authentication Method`);
+	console.log(`  ${C.cyan}1)${C.reset} API Key / Token (direct input)`);
+	console.log(`  ${C.cyan}2)${C.reset} OAuth / Auth Flow (opens browser)`);
+	const authMethodInput = await prompt(`  ${C.cyan}> ${C.reset}Choose [1-2]`);
+
+	let authToken = '';
+	if (authMethodInput.trim() === '2' && provider.authUrl) {
+		// OAuth flow
+		console.log(`\n  ${C.cyan}Opening browser for authentication...${C.reset}`);
+		console.log(`  ${C.gray}${provider.authInstructions}${C.reset}`);
+		console.log(`  ${C.gray}${provider.authUrl}${C.reset}\n`);
+
+		// Open browser
+		const { execSync } = require('child_process');
+		try {
+			execSync(`open "${provider.authUrl}"`, { stdio: 'ignore' });
+		} catch {
+			console.log(`  ${C.yellow}Could not open browser automatically.${C.reset}`);
+			console.log(`  ${C.cyan}Please open this URL manually:${C.reset}`);
+			console.log(`  ${provider.authUrl}\n`);
+		}
+
+		console.log(`  ${C.bold}After completing authentication:${C.reset}`);
+		console.log(`  ${C.gray}Copy your API token/auth token and paste it below${C.reset}\n`);
+		authToken = await prompt(`  ${C.cyan}> ${C.reset}Paste your API token`);
 	} else {
-		console.log(`\n  ${C.yellow}No token entered.${C.reset}\n`);
+		// API key (default or user typed 1)
+		console.log(`\n  ${C.cyan}Enter your API key/token${C.reset}`);
+		if (provider.authInstructions) {
+			console.log(`  ${C.gray}${provider.authInstructions}${C.reset}`);
+			console.log(`  ${C.cyan}${provider.authUrl}${C.reset}\n`);
+		}
+		authToken = await prompt(`  ${C.cyan}> ${C.reset}`);
 	}
 
-	// Wait a bit then continue
-	await new Promise(r => setTimeout(r, 1000));
+	if (!authToken.trim()) {
+		console.log(`\n  ${C.yellow}No token entered. Configuration cancelled.${C.reset}\n`);
+		await new Promise(r => setTimeout(r, 1500));
+		return;
+	}
+
+	// Step 3: Model Name
+	console.log(`\n  ${C.bold}Step 3:${C.reset} Model Name`);
+	console.log(`  ${C.gray}Default: ${provider.defaultModel}${C.reset}`);
+	const modelInput = await prompt(`  ${C.cyan}> ${C.reset}(Enter to use default)`);
+	const model = modelInput.trim() || provider.defaultModel;
+	console.log(`  ${C.green}✓${C.reset} Model: ${model}\n`);
+
+	// Step 4: Optional timeout
+	console.log(`  ${C.bold}Step 4:${C.reset} Request Timeout (optional)`);
+	console.log(`  ${C.gray}Default: 3000000ms (50 minutes)${C.reset}`);
+	const timeoutInput = await prompt(`  ${C.cyan}> ${C.reset}(Press Enter to use default)`);
+	const timeout = timeoutInput.trim() || '3000000';
+	console.log(`  ${C.green}✓${C.reset} Timeout: ${timeout}ms\n`);
+
+	// Save profile
+	const existingProfile = getProfile(provider.id);
+	const profile: Profile = existingProfile || { name: provider.name, provider: provider.id, env: {} };
+	profile.env['ANTHROPIC_AUTH_TOKEN'] = authToken.trim();
+	profile.env['ANTHROPIC_BASE_URL'] = baseUrl;
+	profile.env['ANTHROPIC_MODEL'] = model;
+	profile.env['API_TIMEOUT_MS'] = timeout;
+	profile.env['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'] = '1';
+
+	saveProfile(profile);
+
+	console.log(`  ${C.green}✓${C.reset} ${provider.name} configured successfully!\n`);
+	console.log(`  ${C.gray}Profile saved to: profiles/${provider.id}.json${C.reset}\n`);
+
+	await new Promise(r => setTimeout(r, 1500));
 }
 
 async function listProfiles() {
