@@ -212,13 +212,61 @@ async function configureProvider(provider: Provider) {
 	console.log(`  ${C.green}✓${C.reset} Base URL: ${baseUrl}\n`);
 
 	// Step 2: Auth Method
-	console.log(`  ${C.bold}Step 2:${C.reset} Authentication Method`);
+	console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
 	console.log(`  ${C.cyan}1)${C.reset} API Key / Token (direct input)`);
 	console.log(`  ${C.cyan}2)${C.reset} OAuth / Auth Flow (opens browser)`);
-	const authMethodInput = await prompt(`  ${C.cyan}> ${C.reset}Choose [1-2]`);
+
+	let authMethodSelected = 0;
+	const authMethods = ['API Key / Token', 'OAuth / Auth Flow'];
+
+	const drawAuthMethod = () => {
+		for (let i = 0; i < authMethods.length; i++) {
+			const isSelected = i === authMethodSelected;
+			const marker = isSelected ? `${C.bgCyan}${C.black} >${C.reset}` : '  ';
+			const label = isSelected ? `${C.bgCyan}${C.black}${authMethods[i]}${C.reset}` : authMethods[i];
+			console.log(`  ${marker} ${label}`);
+		}
+		console.log(`\n  ${C.gray}↑↓ Navigate, Enter select, Esc cancel${C.reset}`);
+	};
+
+	drawAuthMethod();
+	process.stdin.setRawMode(true);
+
+	let authMethodChosen: string | null = null;
+	while (true) {
+		const key = await new Promise<{ char: string; key: { ctrl: boolean; name: string } }>((resolve) => {
+			const handler = (char: string, key: { ctrl: boolean; name: string }) => {
+				process.stdin.removeListener('keypress', handler);
+				resolve({ char, key });
+			};
+			process.stdin.on('keypress', handler);
+		});
+
+		if (key.key.ctrl && key.char === 'c') { process.stdin.setRawMode(false); process.exit(0); }
+		if (key.key.name === 'up' || key.char === 'k') {
+			authMethodSelected = (authMethodSelected - 1 + authMethods.length) % authMethods.length;
+			eraseScreen();
+			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
+			drawAuthMethod();
+		} else if (key.key.name === 'down' || key.char === 'j') {
+			authMethodSelected = (authMethodSelected + 1) % authMethods.length;
+			eraseScreen();
+			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
+			drawAuthMethod();
+		} else if (key.key.name === 'return') {
+			authMethodChosen = authMethodSelected === 1 ? 'oauth' : 'api';
+			process.stdin.setRawMode(false);
+			break;
+		} else if (key.key.name === 'escape') {
+			process.stdin.setRawMode(false);
+			console.log(`\n  ${C.yellow}Configuration cancelled.${C.reset}\n`);
+			await new Promise(r => setTimeout(r, 1500));
+			return;
+		}
+	}
 
 	let authToken = '';
-	if (authMethodInput.trim() === '2' && provider.authUrl) {
+	if (authMethodChosen === 'oauth' && provider.authUrl) {
 		// OAuth flow
 		console.log(`\n  ${C.cyan}Opening browser for authentication...${C.reset}`);
 		console.log(`  ${C.gray}${provider.authInstructions}${C.reset}`);
