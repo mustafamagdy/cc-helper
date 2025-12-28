@@ -69,6 +69,8 @@ function getProfileByFileKey(fileKey: string): Profile | null {
 
 // Colors
 const C = { reset: '\x1b[0m', bold: '\x1b[1m', cyan: '\x1b[36m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m', gray: '\x1b[90m', white: '\x1b[37m', bgCyan: '\x1b[46m', black: '\x1b[30m' };
+const CURSOR_HIDE = '\x1b[?25l';
+const CURSOR_SHOW = '\x1b[?25h';
 
 const HEADER_LINES = [
 	'   ██████╗ ██████╗     ██╗  ██╗███████╗██╗     ██████╗ ███████╗██████╗ ',
@@ -95,6 +97,9 @@ function drawNavLine(extraHint?: string): void {
 	console.log(`${C.gray}────────────────────────────────────────────────────────${C.reset}\n`);
 }
 
+function hideCursor(): void { process.stdout.write(CURSOR_HIDE); }
+function showCursor(): void { process.stdout.write(CURSOR_SHOW); }
+
 const menuItems = [
 	{ label: 'Switch Profile', key: 'switch' },
 	{ label: 'Configure', key: 'configure' },
@@ -111,6 +116,7 @@ let inputCallback: ((s: string) => void) | null = null;
 process.on('SIGINT', () => {
 	process.stdin.setRawMode(false);
 	process.stdout.write('\n');
+	showCursor();
 	process.exit(0);
 });
 
@@ -136,8 +142,10 @@ function setupStdin() {
 				inputBuffer = '';
 			} else if (key.name === 'backspace' || key.name === 'delete') {
 				inputBuffer = inputBuffer.slice(0, -1);
+				process.stdout.write('\b \b');
 			} else if (char && char.length === 1) {
 				inputBuffer += char;
+				process.stdout.write(char);
 			}
 		}
 	});
@@ -146,8 +154,12 @@ function setupStdin() {
 function prompt(text: string): Promise<string> {
 	return new Promise((resolve) => {
 		process.stdin.setRawMode(true);
+		showCursor();
 		inputBuffer = '';
-		inputCallback = resolve;
+		inputCallback = (value: string) => {
+			hideCursor();
+			resolve(value);
+		};
 		process.stdout.write(text);
 	});
 }
@@ -217,6 +229,7 @@ function runProfileInCurrentTerminal(profile: Profile): void {
 	// Restore terminal settings
 	process.stdin.setRawMode(false);
 	process.stdin.resume();
+	showCursor();
 
 	try {
 		// Run claude in the current shell with profile env vars
@@ -235,6 +248,7 @@ async function switchProfile() {
 	const profiles = loadProfiles();
 	if (profiles.length === 0) {
 		eraseScreen();
+		hideCursor();
 		drawHeader(`    ${C.bold}Switch Profile${C.reset}`);
 		console.log(`\n${C.yellow}No profiles configured. Go to Configure to add one.${C.reset}\n`);
 		return;
@@ -245,6 +259,7 @@ async function switchProfile() {
 
 	const draw = () => {
 		eraseScreen();
+		hideCursor();
 		const modeLabel = runMode === 'current' ? `${C.green}Current${C.reset}` : `${C.gray}New${C.reset}`;
 		drawHeader(`    ${C.bold}Switch Profile - ${modeLabel} Terminal${C.reset}`);
 		for (let i = 0; i < profiles.length; i++) {
@@ -303,6 +318,7 @@ async function configure() {
 	const totalItems = KNOWN_PROVIDERS.length + 1;
 	const draw = () => {
 		eraseScreen();
+		hideCursor();
 		drawHeader(`    ${C.bold}Configure Provider${C.reset}`);
 		for (let i = 0; i < totalItems; i++) {
 			if (i === 0) {
@@ -361,6 +377,7 @@ async function configure() {
 
 async function configureProvider(provider: Provider, mode: 'add' | 'edit') {
 	eraseScreen();
+	hideCursor();
 	const title = mode === 'add' ? `Add Profile - ${provider.name}` : `Configure ${provider.name}`;
 	drawHeader(`    ${C.bold}${title}${C.reset}`);
 	console.log(`  ${C.gray}${provider.description}${C.reset}\n`);
@@ -447,12 +464,14 @@ async function configureProvider(provider: Provider, mode: 'add' | 'edit') {
 			if (key.key.name === 'up' || key.char === 'k') {
 				authMethodSelected = (authMethodSelected - 1 + authMethods.length) % authMethods.length;
 				eraseScreen();
+				hideCursor();
 				drawHeader(`    ${C.bold}${title}${C.reset}`);
 				console.log(`  ${C.bold}Step 2:${C.reset} Authentication Method\n`);
 				drawAuthMethod();
 			} else if (key.key.name === 'down' || key.char === 'j') {
 				authMethodSelected = (authMethodSelected + 1) % authMethods.length;
 				eraseScreen();
+				hideCursor();
 				drawHeader(`    ${C.bold}${title}${C.reset}`);
 				console.log(`  ${C.bold}Step 2:${C.reset} Authentication Method\n`);
 				drawAuthMethod();
@@ -544,6 +563,7 @@ async function addNewProfileFlow() {
 	const totalItems = KNOWN_PROVIDERS.length + 1;
 	const draw = () => {
 		eraseScreen();
+		hideCursor();
 		drawHeader(`    ${C.bold}Add New Profile${C.reset}`);
 		const customLabel = `${C.green}+${C.reset} Custom Provider`;
 		if (selected === 0) console.log(`  ${C.cyan}▶${C.reset} ${C.bold}${customLabel}${C.reset}`);
@@ -584,6 +604,7 @@ async function addNewProfileFlow() {
 
 async function addCustomProfile() {
 	eraseScreen();
+	hideCursor();
 	drawHeader(`    ${C.bold}Add New Profile${C.reset}`);
 	console.log(`  ${C.gray}Create a custom provider profile.${C.reset}\n`);
 
@@ -625,6 +646,7 @@ async function addCustomProfile() {
 
 async function listProfiles() {
 	eraseScreen();
+	hideCursor();
 	const profiles = loadProfiles();
 	drawHeader(`    ${C.bold}All Profiles${C.reset}`);
 
@@ -653,6 +675,7 @@ async function listProfiles() {
 
 async function showCurrent() {
 	eraseScreen();
+	hideCursor();
 	const currentToken = process.env['ANTHROPIC_AUTH_TOKEN'] || '';
 	const currentUrl = process.env['ANTHROPIC_BASE_URL'] || '';
 	const currentModel = process.env['ANTHROPIC_MODEL'] || '';
@@ -683,6 +706,7 @@ async function showCurrent() {
 
 async function showExport() {
 	eraseScreen();
+	hideCursor();
 	const profiles = loadProfiles();
 	drawHeader(`    ${C.bold}Export Profile${C.reset}`);
 
@@ -795,11 +819,13 @@ async function interactiveMode() {
 		process.stdin.setRawMode(false);
 		process.stdin.removeAllListeners('keypress');
 		process.stdin.pause();
+		showCursor();
 		process.exit(0);
 	};
 
 	const draw = () => {
 		eraseScreen();
+		hideCursor();
 		const profiles = loadProfiles();
 
 		drawHeader(`    ${C.bold}Profile Manager${C.reset}`);
