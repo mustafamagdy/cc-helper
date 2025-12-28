@@ -171,7 +171,7 @@ function getScriptPath(): string {
 function runProfileInTerminal(profile: Profile): void {
 	const { execSync } = require('child_process');
 	const termType = getTerminalType();
-	const claudePath = '/Users/mustafamagdy/.local/bin/claude';
+	const claudePath = process.env['CLAUDE_PATH'] || 'claude';
 
 	// Build env prefix for the command
 	const envVars = Object.entries(profile.env)
@@ -209,7 +209,7 @@ function runProfileInTerminal(profile: Profile): void {
 // Run profile in current terminal (replaces this process with claude)
 function runProfileInCurrentTerminal(profile: Profile): void {
 	const { execSync } = require('child_process');
-	const claudePath = '/Users/mustafamagdy/.local/bin/claude';
+	const claudePath = process.env['CLAUDE_PATH'] || 'claude';
 
 	// Build env with profile settings
 	const env = { ...process.env, ...profile.env };
