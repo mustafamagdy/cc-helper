@@ -219,9 +219,8 @@ async function configureProvider(provider: Provider) {
 	console.log(`  ${C.green}✓${C.reset} Base URL: ${baseUrl}\n`);
 
 	// Step 2: Auth Method
-	console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
-	console.log(`  ${C.cyan}1)${C.reset} API Key / Token (direct input)`);
-	console.log(`  ${C.cyan}2)${C.reset} OAuth / Auth Flow (opens browser)`);
+	eraseScreen();
+	console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method\n`);
 
 	let authMethodSelected = 0;
 	const authMethods = ['API Key / Token', 'OAuth / Auth Flow'];
@@ -253,12 +252,12 @@ async function configureProvider(provider: Provider) {
 		if (key.key.name === 'up' || key.char === 'k') {
 			authMethodSelected = (authMethodSelected - 1 + authMethods.length) % authMethods.length;
 			eraseScreen();
-			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
+			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method\n`);
 			drawAuthMethod();
 		} else if (key.key.name === 'down' || key.char === 'j') {
 			authMethodSelected = (authMethodSelected + 1) % authMethods.length;
 			eraseScreen();
-			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method`);
+			console.log(`\n  ${C.bold}Step 2:${C.reset} Authentication Method\n`);
 			drawAuthMethod();
 		} else if (key.key.name === 'return') {
 			authMethodChosen = authMethodSelected === 1 ? 'oauth' : 'api';
