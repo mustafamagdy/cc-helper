@@ -1,7 +1,7 @@
 [
     {
-        "id": "claude",
-        "name": "Anthropic Claude",
+        "id": "anthropic",
+        "name": "Anthropic",
         "description": "Official Anthropic Claude API",
         "baseUrl": "https://api.anthropic.com",
         "defaultModel": "claude-sonnet-4-20250514",
@@ -9,8 +9,8 @@
         "authInstructions": "Get your API key from the Anthropic Console"
     },
     {
-        "id": "glm",
-        "name": "GLM (Zhipu AI)",
+        "id": "zai",
+        "name": "zAI",
         "description": "Zhipu AI's GLM models",
         "baseUrl": "https://api.z.ai/api/anthropic",
         "defaultModel": "GLM-4.7",

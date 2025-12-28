@@ -147,7 +147,7 @@ function App() {
 
 	const handleSwitch = (profile: Profile) => {
 		// Claude profiles don't need a token (they use direct auth)
-		const needsToken = profile.provider !== 'claude' && !profile.env['ANTHROPIC_AUTH_TOKEN'];
+		const needsToken = profile.provider !== 'anthropic' && !profile.env['ANTHROPIC_AUTH_TOKEN'];
 
 		if (needsToken) {
 			console.log(`\n\x1b[33mProfile needs token. Configure first.\x1b[0m\n`);

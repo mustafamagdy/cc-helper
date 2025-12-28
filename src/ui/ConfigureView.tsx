@@ -41,7 +41,7 @@ export function ConfigureView({
 		} else if (input === 'd') {
 			if (selected > 0) {
 				const profile = profiles[selected - 1];
-				if (profile.provider !== 'claude') {
+				if (profile.provider !== 'anthropic') {
 					setConfirmDelete(profile);
 				}
 			}
@@ -87,7 +87,7 @@ export function ConfigureView({
 				)}
 				<Newline />
 				<Text color="gray">Press ↵ to add or update a profile for the selected provider</Text>
-				<Text color="gray">Press d to remove a provider (except claude)</Text>
+				<Text color="gray">Press d to remove a provider (except Anthropic)</Text>
 			</Box>
 			{confirmDelete && (
 				<Box
