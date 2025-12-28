@@ -1,0 +1,12 @@
+{
+  "name": "Provider Name",
+  "provider": "provider-id",
+  "auth_url": "https://provider.example.com/keys",
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-api-token-here",
+    "ANTHROPIC_BASE_URL": "https://api.provider.example.com/anthropic",
+    "ANTHROPIC_MODEL": "model-name",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  }
+}

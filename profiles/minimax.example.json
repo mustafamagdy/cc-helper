@@ -1,6 +1,7 @@
 {
   "name": "MiniMax",
   "provider": "minimax",
+  "auth_url": "https://platform.minimax.io/user-center/payment/coding-plan",
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your-minimax-jwt-token-here",
     "ANTHROPIC_BASE_URL": "https://api.minimax.io/anthropic",

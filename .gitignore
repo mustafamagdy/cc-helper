@@ -30,3 +30,7 @@ pnpm-debug.log*
 # Cache
 .cache/
 *.tsbuildinfo
+
+# Profile configurations (keep only examples)
+profiles/*.json
+!profiles/*.example.json

@@ -1,6 +1,7 @@
 {
   "name": "GLM (Zhipu AI)",
   "provider": "glm",
+  "auth_url": "https://z.ai/manage-apikey/apikey-list",
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your-glm-token-here",
     "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",

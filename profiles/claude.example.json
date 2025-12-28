@@ -1,6 +1,7 @@
 {
   "name": "Claude (Anthropic)",
   "provider": "claude",
+  "auth_url": "https://console.anthropic.com/settings/keys",
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-ant-api03-...",
     "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
