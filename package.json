@@ -1,19 +1,22 @@
 {
-  "name": "claude-profile",
-  "version": "0.1.0",
-  "description": "CLI tool for managing Claude Code provider profiles",
+  "name": "cc-helper",
+  "version": "1.0.0",
+  "description": "CLI tool for managing LLM provider profiles and configurations",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "claude-profile": "./bin/cli.js"
+    "cc-helper": "./bin/cli.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.tsx"
   },
   "keywords": [
+    "llm",
     "claude",
     "anthropic",
+    "glm",
+    "zhipu",
     "profile",
     "cli",
     "tui"
