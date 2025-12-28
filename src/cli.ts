@@ -108,6 +108,83 @@ function prompt(text: string): Promise<string> {
 
 function eraseScreen() { process.stdout.write('\x1b[2J\x1b[3J\x1b[H'); }
 
+// Detect terminal type on macOS
+function getTerminalType(): 'iterm' | 'apple-terminal' | 'unknown' {
+	const termProgram = process.env['TERM_PROGRAM'];
+	if (termProgram === 'iTerm.app') return 'iterm';
+	if (termProgram === 'Apple_Terminal') return 'apple-terminal';
+	return 'unknown';
+}
+
+// Get the path to this script
+function getScriptPath(): string {
+	return path.resolve(__dirname, '..', 'bin', 'cli.js');
+}
+
+// Run profile in a new terminal
+function runProfileInTerminal(profile: Profile): void {
+	const { execSync } = require('child_process');
+	const termType = getTerminalType();
+	const claudePath = '/Users/mustafamagdy/.local/bin/claude';
+
+	// Build env prefix for the command
+	const envVars = Object.entries(profile.env)
+		.map(([k, v]) => `${k}='${v}'`)
+		.join(' ');
+	const cmd = `env ${envVars} ${claudePath}`;
+
+	let appleCmd: string;
+	if (termType === 'iterm') {
+		appleCmd = `osascript -e '
+			tell application "iTerm2"
+				create window with profile "Default"
+				tell current session of current window
+					write text "${cmd}"
+				end tell
+			end tell
+		'`;
+	} else {
+		appleCmd = `osascript -e '
+			tell app "Terminal"
+				do script "${cmd}"
+				activate
+			end tell
+		'`;
+	}
+
+	try {
+		execSync(appleCmd, { stdio: 'ignore' });
+	} catch (e) {
+		console.log(`\n${C.red}Failed to open terminal.${C.reset}`);
+		console.log(`Run manually:\n  ${cmd}\n`);
+	}
+}
+
+// Run profile in current terminal (replaces this process with claude)
+function runProfileInCurrentTerminal(profile: Profile): void {
+	const { execSync } = require('child_process');
+	const claudePath = '/Users/mustafamagdy/.local/bin/claude';
+
+	// Build env with profile settings
+	const env = { ...process.env, ...profile.env };
+
+	// Restore terminal settings
+	process.stdin.setRawMode(false);
+	process.stdin.resume();
+
+	try {
+		// Run claude in the current shell with profile env vars
+		execSync(`exec "${claudePath}"`, {
+			stdio: 'inherit',
+			env,
+			shell: process.env.SHELL || '/bin/zsh'
+		});
+	} catch (e) {
+		// Claude exited normally or with an error
+	}
+	process.exit(0);
+}
+
 async function switchProfile() {
 	const profiles = loadProfiles();
 	if (profiles.length === 0) {
@@ -117,16 +194,22 @@ async function switchProfile() {
 	}
 
 	let selected = 0;
+	let runMode: 'new' | 'current' = 'current';
+
 	const draw = () => {
 		eraseScreen();
-		console.log(`\n  ${C.bold}${C.cyan}Select Profile${C.reset}\n`);
+		const modeLabel = runMode === 'current' ? `${C.green}Current${C.reset}` : 'New';
+		console.log(`\n  ${C.bold}${C.cyan}Select Profile - ${modeLabel} Terminal${C.reset}\n`);
 		for (let i = 0; i < profiles.length; i++) {
 			const p = profiles[i];
 			const marker = i === selected ? `${C.bgCyan}${C.black} >${C.reset}` : '  ';
 			const name = i === selected ? `${C.bgCyan}${C.black}${p.name}${C.reset}` : p.name;
 			console.log(`${marker} ${name} ${C.gray}(${p.provider})${C.reset}`);
 		}
-		console.log(`\n  ${C.gray}Press Enter to switch, Esc to go back${C.reset}`);
+		const modeText = runMode === 'current'
+			? `${C.green}Enter${C.reset} Run here, ${C.cyan}c${C.reset} new terminal, ${C.cyan}Esc${C.reset} back`
+			: `${C.cyan}Enter${C.reset} new terminal, ${C.cyan}c${C.reset} run here, ${C.cyan}Esc${C.reset} back`;
+		console.log(`\n  ${modeText}`);
 	};
 
 	draw();
@@ -144,16 +227,28 @@ async function switchProfile() {
 		if (key.key.ctrl && key.char === 'c') { process.stdin.setRawMode(false); process.exit(0); }
 		if (key.key.name === 'up' || key.char === 'k') { selected = (selected - 1 + profiles.length) % profiles.length; draw(); }
 		else if (key.key.name === 'down' || key.char === 'j') { selected = (selected + 1) % profiles.length; draw(); }
+		else if (key.char === 'c' || key.char === 'C') {
+			runMode = runMode === 'new' ? 'current' : 'new';
+			draw();
+		}
 		else if (key.key.name === 'return') {
 			const profile = profiles[selected];
-			eraseScreen();
-			console.log(`\n${C.green}Switching to ${profile.name}...${C.reset}\n`);
-			console.log(`Run this command to use in your shell:`);
-			console.log(`  ${C.cyan}source <(claude-profile export ${profile.name})${C.reset}\n`);
 			process.stdin.setRawMode(false);
+			eraseScreen();
+			if (runMode === 'current') {
+				console.log(`\n${C.green}Running ${profile.name} in current terminal...${C.reset}\n`);
+				runProfileInCurrentTerminal(profile);
+			} else {
+				console.log(`\n${C.green}Opening ${profile.name} in new terminal...${C.reset}\n`);
+				runProfileInTerminal(profile);
+			}
 			return;
 		}
-		else if (key.key.name === 'escape') { process.stdin.setRawMode(false); return; }
+		else if (key.key.name === 'escape') {
+			process.stdin.setRawMode(false);
+			process.stdin.removeAllListeners('keypress');
+			return;
+		}
 	}
 }
 
