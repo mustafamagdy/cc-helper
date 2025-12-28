@@ -61,6 +61,13 @@ const menuItems = [
 let inputBuffer = '';
 let inputCallback: ((s: string) => void) | null = null;
 
+// Handle Ctrl+C properly
+process.on('SIGINT', () => {
+	process.stdin.setRawMode(false);
+	process.stdout.write('\n');
+	process.exit(0);
+});
+
 // Set up stdin handler once
 function setupStdin() {
 	const readline = require('readline');
