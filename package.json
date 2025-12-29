@@ -1,11 +1,11 @@
 {
-  "name": "cc-helper",
-  "version": "1.0.1",
+  "name": "claudeprofile",
+  "version": "1.0.0",
   "description": "CLI tool for managing LLM provider profiles and configurations",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "cc-helper": "./bin/cli.js"
+    "claudeprofile": "./bin/cli.js"
   },
   "scripts": {
     "build": "tsc",
