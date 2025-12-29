@@ -18,6 +18,14 @@ export function getProfilesDir(): string {
 	return path.join(configDir, 'claude-profiles');
 }
 
+function ensureProfilesDir(): void {
+	const profilesDir = getProfilesDir();
+	// Create directory and all parent directories if needed
+	if (!fs.existsSync(profilesDir)) {
+		fs.mkdirSync(profilesDir, { recursive: true });
+	}
+}
+
 export function loadProfiles(): Profile[] {
 	const profilesDir = getProfilesDir();
 	if (!fs.existsSync(profilesDir)) return [];
@@ -57,8 +65,8 @@ export function removeProviderProfiles(providerId: string): void {
 }
 
 export function saveProfile(profile: Profile): void {
+	ensureProfilesDir();
 	const profilesDir = getProfilesDir();
-	fs.ensureDirSync(profilesDir);
 	const fileKey = profile.fileKey || slugify(profile.name);
 	const filename = fileKey + '.json';
 	const filepath = path.join(profilesDir, filename);
