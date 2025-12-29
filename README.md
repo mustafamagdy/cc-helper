@@ -2,7 +2,7 @@
 
 A CLI tool for managing diffferent Claude provider profiles and configurations. Switch between Anthropic, zAI (Zhipu GLM), MiniMax, and OpenRouter profiles with ease.
 
-![Main CLI](images/cli.png)
+![Main CLI](https://raw.githubusercontent.com/mustafamagdy/cc-helper/main/images/cli.png)
 
 ## Features
 
@@ -45,7 +45,7 @@ Navigate the menu with:
 2. **Configure** - Add or edit provider configurations
 3. **List Profiles** - View all configured profiles
 
-![Switch Profile](images/select-profile.png)
+![Switch Profile](https://raw.githubusercontent.com/mustafamagdy/cc-helper/main/images/select-profile.png)
 
 
 ## Configuration
@@ -66,7 +66,7 @@ Profiles are stored in `~/.config/claudeprofile/profiles/` as JSON files.
   }
 }
 ```
-![Configure Profiles](images/configure-profiles.png)
+![Configure Profiles](https://raw.githubusercontent.com/mustafamagdy/cc-helper/main/images/configure-profiles.png)
 
 ## Requirements
 
