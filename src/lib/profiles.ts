@@ -1,10 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import os from 'os';
 import type { Profile } from '../types.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Slugify a name for use as filename.
 export function slugify(name: string): string {
@@ -15,7 +12,10 @@ export function slugify(name: string): string {
 }
 
 export function getProfilesDir(): string {
-	return path.join(__dirname, '..', '..', 'profiles');
+	// Use user-level config directory for persistent storage
+	// Works with bunx/npx since it's outside the project directory
+	const configDir = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+	return path.join(configDir, 'claude-profiles');
 }
 
 export function loadProfiles(): Profile[] {

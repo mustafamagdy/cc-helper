@@ -50,7 +50,7 @@ Navigate the menu with:
 
 ## Configuration
 
-Profiles are stored in `~/.config/claudeprofile/profiles/` as JSON files.
+Profiles are stored in `~/.config/claude-profiles/` as JSON files.
 
 ### Example Profile Structure
 
