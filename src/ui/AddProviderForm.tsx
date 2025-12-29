@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Newline, Text, useInput } from 'ink';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Newline, Text, useInput, useStdin } from 'ink';
 import type { CustomProviderData } from '../types.js';
 import { slugify } from '../lib/profiles.js';
 
@@ -22,6 +22,9 @@ export function AddProviderForm({
 		authInstructions: '',
 	});
 
+	const { stdin } = useStdin();
+	const pasteTimeout = useRef<NodeJS.Timeout | null>(null);
+
 	const fields = [
 		{ key: 'providerName', label: 'Provider name' },
 		{ key: 'profileName', label: 'Profile name' },
@@ -31,6 +34,90 @@ export function AddProviderForm({
 		{ key: 'authUrl', label: 'Auth URL (optional)' },
 		{ key: 'authInstructions', label: 'Auth instructions (optional)' },
 	] as const;
+
+	// Handle paste using bracketed paste mode (\x1b[200~ ... \x1b[201~)
+	useEffect(() => {
+		if (!stdin) return;
+
+		let inBracketedPaste = false;
+		let currentPaste = '';
+
+		const handleData = (data: Buffer) => {
+			const str = data.toString();
+
+			// Check for bracketed paste start
+			if (str.includes('\x1b[200~')) {
+				inBracketedPaste = true;
+				currentPaste = str.split('\x1b[200~')[1] || '';
+				return;
+			}
+
+			// Check for bracketed paste end
+			if (str.includes('\x1b[201~')) {
+				if (inBracketedPaste) {
+					const parts = str.split('\x1b[201~');
+					currentPaste += parts[0] || '';
+					const fieldKey = fields[activeIndex].key;
+					setValues((prev) => ({
+						...prev,
+						[fieldKey]: prev[fieldKey] + currentPaste,
+					}));
+				}
+				inBracketedPaste = false;
+				currentPaste = '';
+				return;
+			}
+
+			// Handle paste mode (Ctrl+V sends 0x16)
+			if (inBracketedPaste) {
+				currentPaste += str;
+				return;
+			}
+
+			// Check for 0x16 paste
+			if (str.includes('\x16')) {
+				const parts = str.split('\x16');
+				if (parts[0]) {
+					const fieldKey = fields[activeIndex].key;
+					setValues((prev) => ({
+						...prev,
+						[fieldKey]: prev[fieldKey] + parts[0],
+					}));
+				}
+				const pasted = parts.slice(1).join('').replace(/[\r\n]/g, '');
+				if (pasted) {
+					const fieldKey = fields[activeIndex].key;
+					setValues((prev) => ({
+						...prev,
+						[fieldKey]: prev[fieldKey] + pasted,
+					}));
+				}
+				return;
+			}
+
+			// Fast typing detection - if many chars arrive at once, it's likely a paste
+			if (str.length > 3 && !str.includes('\x1b')) {
+				if (pasteTimeout.current) {
+					clearTimeout(pasteTimeout.current);
+				}
+				pasteTimeout.current = setTimeout(() => {
+					const fieldKey = fields[activeIndex].key;
+					setValues((prev) => ({
+						...prev,
+						[fieldKey]: prev[fieldKey] + str,
+					}));
+				}, 10);
+			}
+		};
+
+		stdin.on('data', handleData);
+		return () => {
+			stdin.off('data', handleData);
+			if (pasteTimeout.current) {
+				clearTimeout(pasteTimeout.current);
+			}
+		};
+	}, [stdin, activeIndex, fields]);
 
 	useInput((input, key) => {
 		if (key.escape) {
@@ -74,7 +161,8 @@ export function AddProviderForm({
 			}));
 			return;
 		}
-		if (input && input.length === 1 && !key.ctrl && !key.meta) {
+		// Accept printable characters (space and above), ignore control chars
+		if (input && input.length === 1 && input.charCodeAt(0) >= 32 && !key.ctrl && !key.meta) {
 			const fieldKey = fields[activeIndex].key;
 			setValues((prev) => ({
 				...prev,
@@ -90,7 +178,7 @@ export function AddProviderForm({
 		<Box flexDirection="column" paddingLeft={2} paddingRight={2}>
 			<Text bold color="cyan">Add Provider</Text>
 			<Newline />
-			<Text color="gray">Tab/↑↓ move · Type to edit · Enter save · Esc cancel</Text>
+			<Text color="gray">Tab/↑↓ move · Type to edit · Cmd+V/Ctrl+V paste · Enter save · Esc cancel</Text>
 			<Newline />
 			{fields.map((field, index) => {
 				const value = values[field.key];
@@ -99,7 +187,7 @@ export function AddProviderForm({
 				return (
 					<Text key={field.key}>
 						<Text color={isActive ? 'cyan' : 'white'} bold={isActive}>
-							{isActive ? '▶ ' : '  '}{paddedLabel} 
+							{isActive ? '▶ ' : '  '}{paddedLabel}
 						</Text>
 						<Text
 							color={isActive ? 'black' : 'white'}
